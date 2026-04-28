@@ -27,6 +27,7 @@ const Views = {
         <div><div class="page-title">📊 ${t('dashboardTitle')}</div>
         <div class="page-subtitle">${new Date().toLocaleDateString(currentLang==='ar'?'ar-SA':'en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
       </div>
+      
       <div class="grid-4" style="margin-bottom:1.5rem">
         <div class="kpi-card" style="--kpi-color:#4F46E5;--kpi-bg:rgba(79,70,229,.15)">
           <div class="kpi-icon">👨‍🏫</div>
@@ -45,25 +46,40 @@ const Views = {
           <div class="kpi-content"><div class="kpi-value">${specs}</div><div class="kpi-label">${t('totalSpecializations')}</div></div>
         </div>
       </div>
-      <div class="grid-2" style="margin-bottom:1.5rem">
+
+      <div class="grid-3" style="margin-bottom:1.5rem">
         <div class="card">
           <div class="card-header"><div class="card-title">🍩 ${t('overallAttendance')}</div></div>
-          <div class="chart-wrap"><canvas id="chart-att-pie"></canvas></div>
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-att-pie"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">📊 ${t('groupPerformance')}</div></div>
-          <div class="chart-wrap"><canvas id="chart-group-bar"></canvas></div>
+          <div class="card-header"><div class="card-title">🎯 ${t('specDistribution')}</div></div>
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-spec-polar"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">👨‍🏫 ${t('instructorWorkload')}</div></div>
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-instr-bar"></canvas></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📈 ${t('evaluationsTitle')} Trend</div></div>
-        <div class="chart-wrap"><canvas id="chart-eval-trend"></canvas></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 ${t('groupPerformance')}</div></div>
+          <div class="chart-wrap" style="height:320px"><canvas id="chart-group-bar"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 ${t('evalTrend')}</div></div>
+          <div class="chart-wrap" style="height:320px"><canvas id="chart-eval-trend"></canvas></div>
+        </div>
       </div>`;
+
     setTimeout(() => {
       Charts.renderAttendancePie('chart-att-pie');
+      Charts.renderSpecDistribution('chart-spec-polar');
+      Charts.renderInstructorWorkload('chart-instr-bar');
       Charts.renderGroupPerformance('chart-group-bar');
       Charts.renderEvalTrend('chart-eval-trend', null);
-    }, 50);
+    }, 100);
   },
 
   // ---- Specializations ----
@@ -120,9 +136,15 @@ const Views = {
 
   // ---- Groups ----
   groups() {
-    const list  = DB.getGroups();
+    let list  = DB.getGroups();
     const specs = DB.getSpecializations();
     const instrs= DB.getInstructors();
+
+    // Instructor isolation
+    if (Auth.isInstructor()) {
+      const instr = Auth.getCurrentInstructor();
+      list = instr ? DB.getGroupsForInstructor(instr.id) : [];
+    }
     const rows  = list.map(g => {
       const spec  = specs.find(s=>s.id===g.specializationId)||{};
       const count = DB.getTraineesByGroup(g.id).length;
@@ -212,6 +234,13 @@ const Views = {
     const name  = document.getElementById('grp-name').value.trim();
     const specId= document.getElementById('grp-spec').value;
     if (!name||!specId) { Toast.show(t('required'),'error'); return; }
+
+    // Security check for instructors
+    if (Auth.isInstructor() && id) {
+      const instr = Auth.getCurrentInstructor();
+      const myGroups = instr ? DB.getGroupsForInstructor(instr.id).map(g=>g.id) : [];
+      if (!myGroups.includes(id)) { Toast.show(t('accessDenied'), 'error'); return; }
+    }
     
     const p1 = {
       startTime: document.getElementById('p1-start').value,
@@ -238,6 +267,12 @@ const Views = {
   },
 
   deleteGroup(id) {
+    // Security check for instructors
+    if (Auth.isInstructor()) {
+      const instr = Auth.getCurrentInstructor();
+      const myGroups = instr ? DB.getGroupsForInstructor(instr.id).map(g=>g.id) : [];
+      if (!myGroups.includes(id)) { Toast.show(t('accessDenied'), 'error'); return; }
+    }
     Modal.confirm(t('deleteGroupConfirm'), ()=>{ DB.deleteGroup(id); Toast.show(t('deleted')); Router.refresh(); });
   },
 };

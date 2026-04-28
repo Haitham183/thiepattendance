@@ -112,6 +112,10 @@ const Router = {
   updateNav(view) {
     document.querySelectorAll('.sidebar-nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.view === view || view.startsWith(el.dataset.view + '/'));
+      // Permission-based visibility
+      if (el.dataset.perm) {
+        el.classList.toggle('hidden', !Auth.can(el.dataset.perm));
+      }
     });
   },
 

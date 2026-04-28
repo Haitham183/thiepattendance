@@ -70,16 +70,16 @@
       </button>
 
       <div class="sidebar-section" style="margin-top:.5rem">Academic Setup</div>
-      <button class="sidebar-nav-item" data-view="specializations">
+      <button class="sidebar-nav-item" data-view="specializations" data-perm="addSpecializations,removeSpecializations">
         <span class="nav-icon">📚</span><span class="nav-label" data-i18n="specializations">Specializations</span>
       </button>
-      <button class="sidebar-nav-item" data-view="groups">
+      <button class="sidebar-nav-item" data-view="groups" data-perm="addGroups,removeGroups">
         <span class="nav-icon">🗂️</span><span class="nav-label" data-i18n="groups">Training Groups</span>
       </button>
       <button class="sidebar-nav-item" data-view="instructors">
         <span class="nav-icon">👨‍🏫</span><span class="nav-label" data-i18n="instructors">Instructors</span>
       </button>
-      <button class="sidebar-nav-item" data-view="trainees">
+      <button class="sidebar-nav-item" data-view="trainees" data-perm="addTrainees,removeTrainees">
         <span class="nav-icon">👥</span><span class="nav-label" data-i18n="trainees">Trainees</span>
       </button>
       <button class="sidebar-nav-item" data-view="holidays">
@@ -95,10 +95,10 @@
       </button>
 
       <div class="sidebar-section" style="margin-top:.5rem">Reports</div>
-      <button class="sidebar-nav-item" data-view="reports/trainee">
+      <button class="sidebar-nav-item" data-view="reports/trainee" data-perm="viewReports">
         <span class="nav-icon">🔍</span><span class="nav-label" data-i18n="reportTrainee">Trainee Report</span>
       </button>
-      <button class="sidebar-nav-item" data-view="reports/group">
+      <button class="sidebar-nav-item" data-view="reports/group" data-perm="viewReports">
         <span class="nav-icon">📈</span><span class="nav-label" data-i18n="reportGroup">Group Report</span>
       </button>
 
@@ -117,11 +117,20 @@
       <button class="sidebar-nav-item" data-view="portal">
         <span class="nav-icon">🏠</span><span class="nav-label" data-i18n="myGroups">My Groups</span>
       </button>
+      <button class="sidebar-nav-item" data-view="trainees" data-perm="addTrainees,removeTrainees">
+        <span class="nav-icon">👥</span><span class="nav-label" data-i18n="trainees">Trainees</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="groups" data-perm="addGroups,removeGroups">
+        <span class="nav-icon">🗂️</span><span class="nav-label" data-i18n="groups">Groups</span>
+      </button>
       <button class="sidebar-nav-item" data-view="attendance">
         <span class="nav-icon">📋</span><span class="nav-label" data-i18n="attendance">Attendance</span>
       </button>
       <button class="sidebar-nav-item" data-view="evaluations">
         <span class="nav-icon">📝</span><span class="nav-label" data-i18n="evaluations">Evaluations</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="reports/trainee" data-perm="viewReports">
+        <span class="nav-icon">🔍</span><span class="nav-label" data-i18n="reportTrainee">Reports</span>
       </button>
       <button class="sidebar-nav-item" data-view="settings">
         <span class="nav-icon">⚙️</span><span class="nav-label" data-i18n="settings">Settings</span>
@@ -142,6 +151,7 @@
     <header class="header">
       <button id="btn-mobile-menu" class="btn btn-ghost btn-icon" style="display:none" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
       <div id="header-title" class="header-title">Dashboard</div>
+      <div id="digital-clock" class="digital-clock no-mobile">00:00:00</div>
       <div class="header-actions">
         <button id="btn-lang" class="btn btn-ghost btn-sm" title="Toggle Language / تبديل اللغة">🌐 EN/AR</button>
         <div class="header-user">
@@ -194,6 +204,13 @@ Router.go = function(view, params={}) {
     const isInstructor = session.role === 'instructor';
     document.getElementById('nav-admin').classList.toggle('hidden', isInstructor);
     document.getElementById('nav-instructor').classList.toggle('hidden', !isInstructor);
+    // Update permissions-based visibility
+    document.querySelectorAll('.sidebar-nav-item[data-perm]').forEach(el => {
+      const perm = el.dataset.perm;
+      const hasPerm = Auth.can(perm);
+      el.classList.toggle('hidden', !hasPerm);
+    });
+
     // Update avatar initial
     const av = document.getElementById('header-avatar');
     if (av && session.displayName) av.textContent = session.displayName.charAt(0).toUpperCase();

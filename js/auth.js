@@ -48,12 +48,16 @@ const Auth = {
     return DB.getInstructorByUserId(user.id) || null;
   },
 
-  // Permissions
+  // Permissions (can check multiple separated by comma, e.g. "addTrainees,removeTrainees")
   can(permission) {
     const user = this.getCurrentUser();
     if (!user) return false;
     if (user.role === 'admin') return true; // admin has all
-    return !!(user.permissions && user.permissions[permission]);
+    if (!user.permissions) return false;
+    
+    // Support multiple permissions (any of them)
+    const perms = permission.split(',').map(p => p.trim());
+    return perms.some(p => !!user.permissions[p]);
   },
 
   isAdmin()      { return this.getRole() === 'admin'; },

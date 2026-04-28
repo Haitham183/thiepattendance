@@ -248,4 +248,69 @@ const DB = {
 
     localStorage.setItem('aa_v2_clean', '1');
   },
+
+  // ---- Backup & Restore ----
+  exportBackup() {
+    const data = {};
+    // Export all keys starting with aa_
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.startsWith('aa_')) {
+        try {
+          data[k] = JSON.parse(localStorage.getItem(k));
+        } catch {
+          data[k] = localStorage.getItem(k);
+        }
+      }
+    }
+    // Add version info
+    data._backup_info = { date: this.now(), version: this.getSettings().version };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `academic_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  importBackup(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target.result;
+          if (!content) throw new Error('File is empty');
+          
+          const data = JSON.parse(content);
+          if (!data || typeof data !== 'object') throw new Error('Invalid JSON structure');
+          
+          // Verify it's a valid backup (should have at least some aa_ keys or _backup_info)
+          const hasData = Object.keys(data).some(k => k.startsWith('aa_'));
+          if (!hasData) throw new Error('Not a valid academic backup file');
+
+          // Clear current system data
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('aa_')) localStorage.removeItem(key);
+          }
+          
+          // Restore keys
+          Object.keys(data).forEach(k => {
+            if (k.startsWith('aa_')) {
+              const val = data[k];
+              localStorage.setItem(k, typeof val === 'string' ? val : JSON.stringify(val));
+            }
+          });
+          resolve(true);
+        } catch (err) {
+          console.error('Import error:', err);
+          reject(err);
+        }
+      };
+      reader.onerror = () => reject(new Error('File reading error'));
+      reader.readAsText(file);
+    });
+  },
 };

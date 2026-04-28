@@ -149,6 +149,90 @@ const Charts = {
     });
   },
 
+  // Specialization Distribution (Trainees per Spec)
+  renderSpecDistribution(canvasId) {
+    this.destroy(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const specs = DB.getSpecializations();
+    const trainees = DB.getTrainees();
+    const groups = DB.getGroups();
+
+    if (!specs.length || !trainees.length) {
+      canvas.parentElement.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><p>${t('noData')}</p></div>`;
+      return;
+    }
+
+    const data = specs.map(s => {
+      const specGroups = groups.filter(g => g.specializationId === s.id).map(g => g.id);
+      const count = trainees.filter(t => specGroups.includes(t.groupId)).length;
+      return { label: s.nameEn, count };
+    }).filter(d => d.count > 0);
+
+    this.instances[canvasId] = new Chart(canvas, {
+      type: 'polarArea',
+      data: {
+        labels: data.map(d => d.label),
+        datasets: [{
+          data: data.map(d => d.count),
+          backgroundColor: ['rgba(79,70,229,0.7)', 'rgba(6,182,212,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(139,92,246,0.7)', 'rgba(239,68,68,0.7)'],
+          borderColor: 'rgba(15,23,42,0.8)',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#94A3B8', font: { size: 10 }, boxWidth: 10 } },
+          tooltip: this.defaults().plugins.tooltip,
+        },
+        scales: { r: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { display: false } } },
+      },
+    });
+  },
+
+  // Instructor Workload (Groups per Instructor)
+  renderInstructorWorkload(canvasId) {
+    this.destroy(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const instrs = DB.getInstructors();
+    const groups = DB.getGroups();
+
+    if (!instrs.length || !groups.length) {
+      canvas.parentElement.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><p>${t('noData')}</p></div>`;
+      return;
+    }
+
+    const data = instrs.map(i => {
+      const count = groups.filter(g => (g.instructorIds || []).includes(i.id)).length;
+      return { name: i.fullName.split(' ')[0], count };
+    }).filter(d => d.count > 0).sort((a,b) => b.count - a.count).slice(0, 8);
+
+    const d = this.defaults();
+    this.instances[canvasId] = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.name),
+        datasets: [{
+          label: t('groups'),
+          data: data.map(d => d.count),
+          backgroundColor: 'rgba(6,182,212,0.7)',
+          borderColor: '#06B6D4',
+          borderWidth: 1.5,
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        ...d,
+        indexAxis: 'y',
+        plugins: { ...d.plugins, legend: { display: false } },
+      },
+    });
+  },
+
   // Group report attendance bar
   renderGroupAttendanceBar(canvasId, data) {
     this.destroy(canvasId);

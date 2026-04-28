@@ -97,10 +97,21 @@ Object.assign(Views, {
 
   // ---- Trainees ----
   trainees() {
-    const list   = DB.getTrainees();
-    const groups = DB.getGroups();
+    let list   = DB.getTrainees();
+    let groups = DB.getGroups();
     const specs  = DB.getSpecializations();
-    let filter   = '';
+    
+    // Instructor isolation
+    if (Auth.isInstructor()) {
+      const instr = Auth.getCurrentInstructor();
+      if (instr) {
+        groups = DB.getGroupsForInstructor(instr.id);
+        const groupIds = groups.map(g => g.id);
+        list = list.filter(tr => groupIds.includes(tr.groupId));
+      } else {
+        list = []; groups = [];
+      }
+    }
 
     const renderTable = (items) => {
       return items.map(tr => {
@@ -163,8 +174,15 @@ Object.assign(Views, {
 
   openTraineeModal(id) {
     const tr     = id ? DB.getTraineeById(id) : null;
-    const groups = DB.getGroups();
+    let groups   = DB.getGroups();
     const specs  = DB.getSpecializations();
+
+    // Instructor isolation
+    if (Auth.isInstructor()) {
+      const instr = Auth.getCurrentInstructor();
+      groups = instr ? DB.getGroupsForInstructor(instr.id) : [];
+    }
+
     const grpOpts= groups.map(g=>{ const sp=specs.find(s=>s.id===g.specializationId)||{}; return `<option value="${g.id}" ${tr&&tr.groupId===g.id?'selected':''}>${g.name} (${sp.nameEn||''})</option>`; }).join('');
     Modal.open({
       title: tr ? t('editTrainee') : t('addTrainee'), size:'lg',
@@ -200,6 +218,14 @@ Object.assign(Views, {
     const start  = document.getElementById('tr-start').value;
     const end    = document.getElementById('tr-end').value;
     if (!name||!jobId||!groupId) { Toast.show(t('required'),'error'); return; }
+
+    // Security check for instructors
+    if (Auth.isInstructor()) {
+      const instr = Auth.getCurrentInstructor();
+      const myGroups = instr ? DB.getGroupsForInstructor(instr.id).map(g=>g.id) : [];
+      if (!myGroups.includes(groupId)) { Toast.show(t('accessDenied'), 'error'); return; }
+    }
+
     const existing = DB.getTraineeByJobId(jobId);
     if (existing && existing.id !== id) { Toast.show(t('jobIdExists'),'error'); return; }
     const data = {fullName:name,jobId,companyName:company,mobile,email,groupId,enrollmentStart:start,enrollmentEnd:end};
@@ -208,6 +234,13 @@ Object.assign(Views, {
   },
 
   deleteTrainee(id) {
+    // Security check for instructors
+    if (Auth.isInstructor()) {
+      const tr = DB.getTraineeById(id);
+      const instr = Auth.getCurrentInstructor();
+      const myGroups = instr ? DB.getGroupsForInstructor(instr.id).map(g=>g.id) : [];
+      if (!tr || !myGroups.includes(tr.groupId)) { Toast.show(t('accessDenied'), 'error'); return; }
+    }
     Modal.confirm(t('deleteTraineeConfirm'),()=>{ DB.deleteTrainee(id); Toast.show(t('deleted')); Router.refresh(); });
   },
 

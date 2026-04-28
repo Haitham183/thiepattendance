@@ -223,6 +223,25 @@ Object.assign(Views, {
   // ---- Settings ----
   settings() {
     const cfg = DB.getSettings();
+    const adminPanel = Auth.isAdmin() ? `
+      <div class="card mt-4">
+        <div class="card-header"><div class="card-title">💾 ${t('backupTitle')}</div></div>
+        <div class="p-4">
+          <div class="grid-2">
+            <div class="p-3" style="background:var(--bg-glass);border-radius:var(--r-md);border:1px solid var(--border)">
+              <p class="text-sm text-muted mb-4">${t('backupDesc')}</p>
+              <button class="btn btn-primary w-full" onclick="DB.exportBackup()">📥 ${t('backupBtn')}</button>
+            </div>
+            <div class="p-3" style="background:var(--bg-glass);border-radius:var(--r-md);border:1px solid var(--border)">
+              <p class="text-sm text-muted mb-4">${t('restoreDesc')}</p>
+              <input type="file" id="restore-file" style="display:none" onchange="Views._handleRestore(this)">
+              <button class="btn btn-secondary w-full" onclick="document.getElementById('restore-file').click()">📤 ${t('restoreBtn')}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ` : '';
+
     document.getElementById('main').innerHTML = `
       <div class="page-header"><div><div class="page-title">⚙️ ${t('settingsTitle')}</div></div></div>
       <div class="grid-2">
@@ -248,7 +267,26 @@ Object.assign(Views, {
             <div class="text-sm text-muted mt-1">Total Evaluations: ${DB.getEvaluations().length}</div>
           </div>
         </div>
-      </div>`;
+      </div>
+      ${adminPanel}`;
+  },
+
+  _handleRestore(input) {
+    const file = input.files ? input.files[0] : null;
+    if (!file) return;
+
+    Modal.confirm(t('restoreConfirm'), () => {
+      DB.importBackup(file)
+        .then(() => {
+          Toast.show(t('restoreSuccess'), 'success');
+          setTimeout(() => location.reload(), 1500);
+        })
+        .catch(err => {
+          console.error('Restore failed:', err);
+          Toast.show(`${t('restoreError')} [${err.message}]`, 'error');
+        });
+    });
+    input.value = ''; // Reset
   },
 
   _saveSettings() {
@@ -256,6 +294,15 @@ Object.assign(Views, {
     const end   = document.getElementById('cfg-end').value;
     DB.saveSettings({ ...DB.getSettings(), workingHoursStart:start, workingHoursEnd:end });
     Toast.show(t('settingsSaved'));
+  },
+
+  updateClock() {
+    const el = document.getElementById('digital-clock');
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleTimeString(currentLang === 'ar' ? 'ar-SA' : 'en-US', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    });
   },
 });
 
@@ -313,6 +360,10 @@ const App = {
     } else {
       Router.go('login');
     }
+
+    // Clock
+    Views.updateClock();
+    setInterval(() => Views.updateClock(), 1000);
   }
 };
 
