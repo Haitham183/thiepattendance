@@ -273,7 +273,7 @@ const App = {
       loginForm.addEventListener('submit', e => {
         e.preventDefault();
         const u = document.getElementById('login-username').value.trim();
-        const p = document.getElementById('login-password').value;
+        const p = document.getElementById('login-password').value.trim();
         const session = Auth.login(u, p);
         if (!session) {
           document.getElementById('login-form-error').textContent = t('loginError');
