@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definitions
+    function isSignedIn() { return request.auth != null; }
+    function isEmailVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function getUserData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function hasRole(role) { return isSignedIn() && getUserData().role == role; }
+    function isAdmin() { return hasRole('admin'); }
+    function isSupervisor() { return hasRole('supervisor'); }
+    function isInstructor() { return hasRole('instructor'); }
+    function isValidId(id) { return id is string && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Users ---
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin() || isSupervisor());
+      allow create: if isSignedIn() && request.auth.uid == userId && 
+                    incoming().role in ['instructor', 'supervisor'] && // Only self-registration as default roles
+                    incoming().keys().hasAll(['uid', 'fullName', 'email', 'role']) &&
+                    incoming().uid == request.auth.uid &&
+                    incoming().email == request.auth.token.email;
+      allow update: if isAdmin() || (request.auth.uid == userId && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'specialization']));
+    }
+
+    // --- Specializations ---
+    function isValidSpecialization(data) {
+      return data.nameEn is string && data.nameEn.size() <= 100 &&
+             data.nameAr is string && data.nameAr.size() <= 100;
+    }
+    match /specializations/{specId} {
+      allow read: if isSignedIn();
+      allow create, update: if (isAdmin() || isSupervisor()) && isValidId(specId) && isValidSpecialization(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // --- Groups ---
+    function isValidGroup(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.specializationId is string &&
+             data.instructorId is string &&
+             data.status in ['active', 'completed', 'pending'];
+    }
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow create, update: if (isAdmin() || isSupervisor()) && isValidId(groupId) && isValidGroup(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // --- Trainees ---
+    function isValidTrainee(data) {
+      return data.jobId is string && data.jobId.size() <= 20 &&
+             data.fullName is string && data.fullName.size() <= 150 &&
+             data.specializationId is string &&
+             data.groupId is string;
+    }
+    match /trainees/{traineeId} {
+      allow read: if isSignedIn();
+      allow create, update: if (isAdmin() || isSupervisor()) && isValidId(traineeId) && isValidTrainee(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // --- Attendance ---
+    function isValidAttendance(data) {
+      return data.status in ['P', 'A', 'E', 'H', 'L'] &&
+             data.date is string &&
+             data.traineeId is string &&
+             data.groupId is string;
+    }
+    match /attendance/{attendanceId} {
+      allow read: if isSignedIn();
+      allow create: if (isAdmin() || isSupervisor() || (isInstructor() && 
+                    get(/databases/$(database)/documents/groups/$(incoming().groupId)).data.instructorId == request.auth.uid)) &&
+                    isValidAttendance(incoming()) &&
+                    incoming().markedBy == request.auth.uid;
+      allow update: if (isAdmin() || isSupervisor()) && isValidAttendance(incoming());
+    }
+
+    // --- Evaluations ---
+    function isValidEvaluation(data) {
+      return data.score1 >= 0 && data.score1 <= 100 &&
+             data.score2 >= 0 && data.score2 <= 100 &&
+             data.month >= 1 && data.month <= 12;
+    }
+    match /evaluations/{evaluationId} {
+      allow read: if isSignedIn();
+      allow create: if (isAdmin() || isSupervisor() || (isInstructor() && 
+                    get(/databases/$(database)/documents/groups/$(incoming().groupId)).data.instructorId == request.auth.uid)) &&
+                    isValidEvaluation(incoming()) &&
+                    incoming().submittedBy == request.auth.uid;
+      allow update: if (isAdmin() || isSupervisor() || (isInstructor() && 
+                    existing().submittedBy == request.auth.uid)) &&
+                    isValidEvaluation(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['score1', 'score2', 'average', 'grade']);
+    }
+
+    // --- Settings ---
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
