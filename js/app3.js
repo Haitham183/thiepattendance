@@ -296,7 +296,10 @@ const App = {
 
     // Sidebar nav
     document.querySelectorAll('.sidebar-nav-item[data-view]').forEach(el => {
-      el.addEventListener('click', () => Router.go(el.dataset.view));
+      el.addEventListener('click', () => {
+        Router.go(el.dataset.view);
+        document.getElementById('sidebar')?.classList.remove('open');
+      });
     });
 
     // Modal overlay click to close
