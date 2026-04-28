@@ -84,9 +84,9 @@ const Reports = {
       const info = Evaluations.gradeInfo(e.total || 0);
       return `<tr>
         <td>${e.month}</td>
-        <td style="text-align:center">${e.score1}</td>
-        <td style="text-align:center">${e.score2}</td>
-        <td style="text-align:center;font-weight:700">${e.total}%</td>
+        <td style="text-align:center">${Math.round(e.score1 || 0)}</td>
+        <td style="text-align:center">${Math.round(e.score2 || 0)}</td>
+        <td style="text-align:center;font-weight:700">${Math.round(e.total || 0)}%</td>
         <td style="text-align:center"><span class="grade-badge ${info.cls}">${info.label()}</span></td>
       </tr>`;
     }).join('') || `<tr><td colspan="5" class="text-center text-muted">${t('noData')}</td></tr>`;

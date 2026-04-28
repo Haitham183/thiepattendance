@@ -230,8 +230,12 @@ const DB = {
 
   // ---- Seed (initial data) ----
   seed() {
-    if (this.load('aa_seeded')) return;
-    // Admin user (password: admin123)
+    if (this.load('aa_v2_clean')) return;
+    
+    // Clear any existing demo data to start fresh
+    Object.values(this.KEYS).forEach(k => localStorage.removeItem(k));
+
+    // Create ONLY the default Admin user (password: admin123)
     this.addUser({
       username: 'admin', passwordHash: btoa('admin123'),
       role: 'admin',
@@ -241,61 +245,7 @@ const DB = {
       },
       displayName: 'Administrator',
     });
-    // Sample specializations
-    const s1 = this.addSpec({ nameEn: 'Information Technology', nameAr: 'تقنية المعلومات', description: 'IT and programming courses' });
-    const s2 = this.addSpec({ nameEn: 'Cybersecurity', nameAr: 'الأمن السيبراني', description: 'Network security and ethical hacking' });
-    const s3 = this.addSpec({ nameEn: 'Data Science', nameAr: 'علم البيانات', description: 'Data analysis and machine learning' });
-    // Sample instructor user
-    const iUser = this.addUser({
-      username: 'instructor1', passwordHash: btoa('inst123'),
-      role: 'instructor',
-      permissions: { viewReports: true },
-      displayName: 'Ahmed Al-Rashidi',
-    });
-    const instr = this.addInstructor({
-      fullName: 'Ahmed Al-Rashidi', email: 'ahmed@institute.sa',
-      phone: '0501234567', specializationId: s1.id, userId: iUser.id,
-    });
-    this.updateUser(iUser.id, { instructorId: instr.id });
-    // Sample groups
-    const g1 = this.addGroup({
-      name: 'IT-2024-A', specializationId: s1.id,
-      startDate: '2024-01-15', endDate: '2026-12-31',
-      startTime: '08:00', endTime: '12:00',
-      instructorIds: [instr.id],
-    });
-    const g2 = this.addGroup({
-      name: 'CY-2024-B', specializationId: s2.id,
-      startDate: '2024-02-01', endDate: '2026-12-31',
-      startTime: '13:00', endTime: '17:00',
-      instructorIds: [],
-    });
-    // Sample trainees
-    const traineeData = [
-      { fullName: 'Mohammed Al-Zahrani', jobId: 'EMP001', companyName: 'Saudi Aramco', mobile: '0551234567', email: 'moh@aramco.com' },
-      { fullName: 'Sara Al-Otaibi', jobId: 'EMP002', companyName: 'SABIC', mobile: '0562345678', email: 'sara@sabic.com' },
-      { fullName: 'Khalid Al-Ghamdi', jobId: 'EMP003', companyName: 'STC', mobile: '0573456789', email: 'khalid@stc.com' },
-      { fullName: 'Fatima Al-Shehri', jobId: 'EMP004', companyName: 'Saudi Aramco', mobile: '0584567890', email: 'fatima@aramco.com' },
-    ];
-    traineeData.forEach(td => this.addTrainee({ ...td, groupId: g1.id, enrollmentStart: '2024-01-15', enrollmentEnd: '2026-12-31' }));
-    const t5 = this.addTrainee({ fullName: 'Omar Al-Harbi', jobId: 'EMP005', companyName: 'STC', mobile: '0595678901', email: 'omar@stc.com', groupId: g2.id, enrollmentStart: '2024-02-01', enrollmentEnd: '2026-12-31' });
 
-    // Seed some attendance for April 2026
-    const allTrainees = this.getTrainees();
-    const dates = ['2026-04-05','2026-04-06','2026-04-07','2026-04-08','2026-04-09'];
-    allTrainees.forEach(tr => {
-      dates.forEach(d => {
-        const status = Math.random() > 0.15 ? 'P' : (Math.random() > 0.5 ? 'A' : 'E');
-        this.upsertAttendance(tr.groupId, tr.id, d, status);
-      });
-      // Seed evaluations for April 2026
-      this.upsertEvaluation(tr.groupId, tr.id, '2026-04', 70 + Math.random()*30, 70 + Math.random()*30);
-    });
-
-    // Sample holidays
-    this.addHoliday({ date: '2026-04-23', reason: 'Eid Al-Fitr' });
-    this.addHoliday({ date: '2026-04-30', reason: 'Spring Break' });
-
-    localStorage.setItem('aa_seeded', '1');
+    localStorage.setItem('aa_v2_clean', '1');
   },
 };
