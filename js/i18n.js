@@ -125,6 +125,8 @@ const i18n = {
     addHoliday: 'Add Exceptional Holiday', holidayDate: 'Holiday Date',
     holidayReason: 'Reason / Occasion', deleteHolidayConfirm: 'Delete this holiday?',
     period1: 'Period 1', period2: 'Period 2',
+    clearAllConfirm: 'Are you sure you want to clear all attendance for this month?',
+    cleared: 'Data cleared successfully.',
     instructor1: 'Instructor 1', instructor2: 'Instructor 2',
     sessionStartTime: 'Session Start', sessionEndTime: 'Session End',
   },
@@ -252,6 +254,8 @@ const i18n = {
     addHoliday: 'إضافة عطلة استثنائية', holidayDate: 'تاريخ العطلة',
     holidayReason: 'السبب / المناسبة', deleteHolidayConfirm: 'حذف هذه العطلة؟',
     period1: 'الفترة الأولى', period2: 'الفترة الثانية',
+    clearAllConfirm: 'هل أنت متأكد من مسح جميع بيانات التحضير لهذا الشهر؟',
+    cleared: 'تم مسح البيانات بنجاح.',
     instructor1: 'مدرب الفترة الأولى', instructor2: 'مدرب الفترة الثانية',
     sessionStartTime: 'بداية الفترة', sessionEndTime: 'نهاية الفترة',
   }

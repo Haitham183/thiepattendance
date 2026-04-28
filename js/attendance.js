@@ -230,6 +230,43 @@ const Attendance = {
     if (groupSel) Views.attendance({ groupId: groupSel.value, month: parseInt(monthSel.value), year: parseInt(yearSel.value) });
   },
 
+  // Clear all attendance records for a group/month (restricted by period if instructor)
+  clearAll(groupId, year, month) {
+    const period = this.getInstructorActivePeriod(groupId);
+    if (!period && !Auth.isAdminOrSupervisor()) {
+      Toast.show(t('noPermission'), 'error');
+      return;
+    }
+
+    Modal.confirm(t('clearAllConfirm'), () => {
+      const targetPeriods = period ? [period] : [1, 2];
+      const trainees  = DB.getTraineesByGroup(groupId);
+      const workDays  = this.getWorkingDays(year, month, true);
+      const records   = [];
+
+      trainees.forEach(tr => {
+        workDays.forEach(date => {
+          targetPeriods.forEach(p => {
+            records.push({ groupId, traineeId: tr.id, date, status: '', period: p });
+          });
+        });
+      });
+
+      DB.bulkUpsertAttendance(records);
+      Toast.show(t('cleared'), 'success');
+      
+      // Refresh current view
+      const groupSel  = document.getElementById('att-group');
+      const monthSel  = document.getElementById('att-month');
+      const yearSel   = document.getElementById('att-year');
+      if (groupSel) Views.attendance({ 
+        groupId: groupSel.value, 
+        month: parseInt(monthSel.value), 
+        year: parseInt(yearSel.value) 
+      });
+    });
+  },
+
   canInstructorEdit(groupId, period) {
     const session = Auth.getSession();
     if (!session || session.role !== 'instructor') return false;
