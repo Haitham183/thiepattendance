@@ -1,0 +1,81 @@
+/* =====================================================
+   ACADEMIC AFFAIRS — Print Styles (A4)
+   ===================================================== */
+@media print {
+  @page { size: A4; margin: 15mm 12mm; }
+
+  /* Hide UI chrome */
+  .sidebar, .header, .btn, .btn-group, .filters-bar,
+  .modal-overlay, .toast-container, .page-header .btn,
+  .table-actions, .sidebar-nav-item[data-action],
+  .no-print { display: none !important; }
+
+  /* Remove backgrounds for ink saving */
+  body, .main-content, .main {
+    background: #fff !important; color: #111 !important;
+    margin: 0 !important; padding: 0 !important;
+  }
+  .main-content { margin-left: 0 !important; margin-right: 0 !important; }
+
+  /* Cards become plain boxes */
+  .card, .report-trainee-header, .table-wrap {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-radius: 4px !important;
+  }
+
+  /* Text */
+  .text-muted, .text-2, .page-subtitle,
+  .table td, .table th { color: #333 !important; }
+  .page-title, .card-title, .report-trainee-name,
+  .report-section-title { color: #000 !important; }
+
+  /* Tables */
+  .table th { background: #f0f0f0 !important; }
+  .table tbody tr:hover { background: transparent !important; }
+  .att-table .trainee-col, .att-table .jobid-col {
+    background: #fff !important; }
+  .att-table th { background: #f0f0f0 !important; color: #333 !important; }
+
+  /* Attendance cells in print */
+  .att-cell { border: 1px solid #ccc !important; }
+  .att-cell.status-P { background: #d4edda !important; color: #155724 !important; }
+  .att-cell.status-A { background: #f8d7da !important; color: #721c24 !important; }
+  .att-cell.status-E { background: #fff3cd !important; color: #856404 !important; }
+  .att-cell.status-H { background: #cce5ff !important; color: #004085 !important; }
+  .att-cell.status-L { background: #e2d9f3 !important; color: #4a2c6e !important; }
+
+  /* Badges */
+  .badge, .grade-badge {
+    border: 1px solid #ccc !important;
+    background: transparent !important;
+    color: #333 !important;
+  }
+
+  /* Chart canvas */
+  canvas { max-width: 100% !important; height: auto !important; }
+
+  /* Page breaks */
+  .report-section { page-break-inside: avoid; }
+  .page-break { page-break-before: always; }
+
+  /* Print header */
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #333;
+  }
+  .print-header h1 { font-size: 1.2rem; color: #000; }
+  .print-header p  { font-size: .8rem; color: #666; }
+  .print-date { font-size: .75rem; color: #666; text-align: right; }
+}
+
+/* Print-only elements (hidden on screen) */
+.print-header { display: none; }
+.print-only   { display: none; }
+@media print { .print-only { display: block !important; } }

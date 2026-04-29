@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Affairs Management System</title>
+  <meta name="description" content="Comprehensive Academic Affairs Management System for technical training institutes.">
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/print.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="text-center" style="margin-bottom:2rem">
+      <div class="login-logo">
+        <img src="assets/logo.png" alt="THIEP" style="width:120px;height:auto;filter:drop-shadow(0 0 10px rgba(79,70,229,0.2))">
+      </div>
+      <h1 style="font-size:1.4rem;font-weight:700;margin-top:1.25rem" data-i18n="appName">Academic Affairs</h1>
+      <p style="color:var(--text-2);font-size:.875rem;margin-top:.25rem" data-i18n="appSubtitle">Management System</p>
+    </div>
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label" data-i18n="username">Username</label>
+        <input id="login-username" class="form-control" autocomplete="username" placeholder="admin" 
+          autocapitalize="none" autocorrect="off" spellcheck="false" required>
+      </div>
+      <div class="form-group" style="margin-top:1rem">
+        <label class="form-label" data-i18n="password">Password</label>
+        <input id="login-password" type="password" class="form-control" autocomplete="current-password" 
+          placeholder="••••••••" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+      </div>
+      <div id="login-form-error" style="color:var(--status-a);font-size:.8rem;margin-top:.5rem;min-height:1rem"></div>
+      <button type="submit" class="btn btn-primary w-full" style="margin-top:1.25rem;justify-content:center">
+        <span>🔓</span> <span data-i18n="loginBtn">Sign In</span>
+      </button>
+    </form>
+    <div style="margin-top:1.5rem;padding:.875rem;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--r-md);font-size:.78rem;color:var(--text-3)">
+      <strong style="color:var(--text-2)">Default credentials:</strong><br>
+      Admin: <code style="color:var(--primary-light)">admin / admin123</code><br>
+      Instructor: <code style="color:var(--secondary)">instructor1 / inst123</code>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP SHELL ==================== -->
+<div id="app-shell" class="app-shell hidden">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="assets/logo.png" alt="Logo" style="width:38px;height:auto;margin-right:.5rem">
+      <div class="logo-text">
+        <strong data-i18n="appName">Academic Affairs</strong>
+        <span data-i18n="appSubtitle">Management System</span>
+      </div>
+    </div>
+
+    <!-- Admin / Supervisor Navigation -->
+    <nav class="sidebar-nav" id="nav-admin">
+      <div class="sidebar-section">Main</div>
+      <button class="sidebar-nav-item" data-view="dashboard">
+        <span class="nav-icon">📊</span><span class="nav-label" data-i18n="dashboard">Dashboard</span>
+      </button>
+
+      <div class="sidebar-section" style="margin-top:.5rem">Academic Setup</div>
+      <button class="sidebar-nav-item" data-view="specializations" data-perm="addSpecializations,removeSpecializations">
+        <span class="nav-icon">📚</span><span class="nav-label" data-i18n="specializations">Specializations</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="groups" data-perm="addGroups,removeGroups">
+        <span class="nav-icon">🗂️</span><span class="nav-label" data-i18n="groups">Training Groups</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="instructors">
+        <span class="nav-icon">👨‍🏫</span><span class="nav-label" data-i18n="instructors">Instructors</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="trainees" data-perm="addTrainees,removeTrainees">
+        <span class="nav-icon">👥</span><span class="nav-label" data-i18n="trainees">Trainees</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="holidays">
+        <span class="nav-icon">📅</span><span class="nav-label" data-i18n="holidays">Holidays</span>
+      </button>
+
+      <div class="sidebar-section" style="margin-top:.5rem">Instructor Tools</div>
+      <button class="sidebar-nav-item" data-view="attendance">
+        <span class="nav-icon">📋</span><span class="nav-label" data-i18n="attendance">Attendance</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="evaluations">
+        <span class="nav-icon">📝</span><span class="nav-label" data-i18n="evaluations">Evaluations</span>
+      </button>
+
+      <div class="sidebar-section" style="margin-top:.5rem">Reports</div>
+      <button class="sidebar-nav-item" data-view="reports/trainee" data-perm="viewReports">
+        <span class="nav-icon">🔍</span><span class="nav-label" data-i18n="reportTrainee">Trainee Report</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="reports/group" data-perm="viewReports">
+        <span class="nav-icon">📈</span><span class="nav-label" data-i18n="reportGroup">Group Report</span>
+      </button>
+
+      <div class="sidebar-section" style="margin-top:.5rem">System</div>
+      <button class="sidebar-nav-item" data-view="users">
+        <span class="nav-icon">🔐</span><span class="nav-label" data-i18n="users">User Management</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="settings">
+        <span class="nav-icon">⚙️</span><span class="nav-label" data-i18n="settings">Settings</span>
+      </button>
+    </nav>
+
+    <!-- Instructor-only Navigation -->
+    <nav class="sidebar-nav hidden" id="nav-instructor">
+      <div class="sidebar-section">Instructor Portal</div>
+      <button class="sidebar-nav-item" data-view="portal">
+        <span class="nav-icon">🏠</span><span class="nav-label" data-i18n="myGroups">My Groups</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="trainees" data-perm="addTrainees,removeTrainees">
+        <span class="nav-icon">👥</span><span class="nav-label" data-i18n="trainees">Trainees</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="groups" data-perm="addGroups,removeGroups">
+        <span class="nav-icon">🗂️</span><span class="nav-label" data-i18n="groups">Groups</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="attendance">
+        <span class="nav-icon">📋</span><span class="nav-label" data-i18n="attendance">Attendance</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="evaluations">
+        <span class="nav-icon">📝</span><span class="nav-label" data-i18n="evaluations">Evaluations</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="reports/trainee" data-perm="viewReports">
+        <span class="nav-icon">🔍</span><span class="nav-label" data-i18n="reportTrainee">Reports</span>
+      </button>
+      <button class="sidebar-nav-item" data-view="settings">
+        <span class="nav-icon">⚙️</span><span class="nav-label" data-i18n="settings">Settings</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button id="btn-logout" class="sidebar-nav-item" style="width:100%;color:var(--status-a)">
+        <span class="nav-icon">🚪</span><span class="nav-label" data-i18n="logout">Logout</span>
+      </button>
+    </div>
+  </aside>
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="document.getElementById('sidebar').classList.remove('open')"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <!-- HEADER -->
+    <header class="header">
+      <button id="btn-mobile-menu" class="btn btn-ghost btn-icon" style="display:none" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div id="header-title" class="header-title">Dashboard</div>
+      <div id="digital-clock" class="digital-clock no-mobile">00:00:00</div>
+      <div class="header-actions">
+        <button id="btn-lang" class="btn btn-ghost btn-sm" title="Toggle Language / تبديل اللغة">🌐 EN/AR</button>
+        <div class="header-user">
+          <div class="header-avatar" id="header-avatar">A</div>
+          <div>
+            <div style="font-weight:600;font-size:.875rem" id="header-user-name">Admin</div>
+            <div style="font-size:.7rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em" id="header-role">admin</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN VIEW AREA -->
+    <main class="main" id="main">
+      <!-- Views are rendered here dynamically -->
+    </main>
+  </div>
+</div>
+
+<!-- ==================== MODAL ==================== -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div id="modal" class="modal"></div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/router.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/attendance.js"></script>
+<script src="js/evaluations.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+<script src="js/app2.js"></script>
+<script src="js/app3.js"></script>
+
+<script>
+// Show correct sidebar nav based on role after login
+const _origRouterGo = Router.go.bind(Router);
+Router.go = function(view, params={}) {
+  _origRouterGo(view, params);
+  const session = Auth.getSession();
+  if (session) {
+    const isInstructor = session.role === 'instructor';
+    document.getElementById('nav-admin').classList.toggle('hidden', isInstructor);
+    document.getElementById('nav-instructor').classList.toggle('hidden', !isInstructor);
+    // Update permissions-based visibility
+    document.querySelectorAll('.sidebar-nav-item[data-perm]').forEach(el => {
+      const perm = el.dataset.perm;
+      const hasPerm = Auth.can(perm);
+      el.classList.toggle('hidden', !hasPerm);
+    });
+
+    // Update avatar initial
+    const av = document.getElementById('header-avatar');
+    if (av && session.displayName) av.textContent = session.displayName.charAt(0).toUpperCase();
+  }
+};
+</script>
+
+</body>
+</html>
